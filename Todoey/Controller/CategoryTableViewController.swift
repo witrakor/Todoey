@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryTableViewController: UITableViewController {
+class CategoryTableViewController: SwipeViewController {
     
     let realm = try! Realm()
     //Array to keep Cate
@@ -22,7 +23,11 @@ class CategoryTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategory()
+        
+        tableView.separatorStyle = .none
     }
+    
+ 
     
     //MARK: - TableView Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -30,11 +35,14 @@ class CategoryTableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        
-        cell.textLabel?.text = cateArray?[indexPath.row].name ?? "No Categories added"
-        
-        
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        if let category = cateArray?[indexPath.row] {
+            cell.textLabel?.text = category.name
+            //cell.textLabel?.textColor = ContrastColorOf(aa!, returnFlat: true)
+            guard let categoryColor = UIColor(hexString: category.color) else { fatalError() }
+            cell.backgroundColor = categoryColor
+            cell.textLabel?.textColor = ContrastColorOf(categoryColor, returnFlat: true)
+        }
         return cell
     }
     
@@ -68,7 +76,7 @@ class CategoryTableViewController: UITableViewController {
             
             
             newCateToAdd.name = textField.text!
-            
+            newCateToAdd.color = UIColor.randomFlat.hexValue()
             
             
             //self.defaults.set(self.itemArray, forKey: "TodoListArray")
@@ -120,4 +128,19 @@ class CategoryTableViewController: UITableViewController {
         
     }
     
+    override func updateModel(at indexPath: IndexPath) {
+        if let cateForDeletion = self.cateArray?[indexPath.row]{
+            do{
+                try self.realm.write{
+                    self.realm.delete(cateForDeletion)
+                }
+            }catch{
+                print("Error deleting category, \(error)")
+            }
+            //tableView.reloadData()
+        }
+    }
+    
 }
+
+
